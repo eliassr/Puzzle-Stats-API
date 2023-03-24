@@ -4,6 +4,8 @@ Utilities for Puzzle parser.
 Contains miscellaneous function definitions, variable declarations, and
 handlers for all the different puzzle types.
 """
+import re
+
 
 def timestr_to_seconds(tstr):
     """
@@ -18,6 +20,85 @@ def timestr_to_seconds(tstr):
     except:
         return None
 
+
+def get_fractional_score(score_str):
+    """
+    Many games give score on the form "./.", e.g. wordle's 2/6, 3/6 etc.
+    This function takes a score string and returns the first number. 
+    Alternatively if it says "X/6" for instance, return 0. 
+    If the string does not match the regex "./.", return None.
+
+    Arguments:
+        - score_str: Score string from parser
+    Returns: 
+        - Score, cast as int. 
+    """
+    if re.match(r'[1-6X]\/[4-6]',score_str):
+        return 0 if score_str[0]=='X' else int(score_str[0])
+    else:
+        return None
+
+
+def get_int_score(score_str):
+    """
+    Get single-number score, e.g. from Countryle which has integer scoring.
+    Return None if score_str is not a number. 
+
+    Arguments:
+        - score_str: Score string from parser
+
+    Returns:
+        - Numeric score
+    """
+    try:
+        s = int(score_str)
+    except ValueError:
+        s = None 
+    finally:
+        return s
+
+
+def get_quordle_score(score_str):
+    """
+    Get score from quordle game. Returns number of attemps (max digit in score_str).
+    If game failed (score_str contains at least one 0), return 0
+    If score_str does not conform to regex of four digits, return None. 
+
+    Arguments:
+        - score_str: Score string from parser
+
+    Returns:
+        - Numeric score
+    """
+    if re.match(r'^\d{4}$',score_str):
+        lst = [int(x) for x in score_str]
+        return 0 if 0 in lst else max(lst)
+    else:
+        return None
+
+
+def score_converter(score_str):
+    """
+    Master function to convert any score str in dataset to a numeric value. 
+    Since results from different puzzles come in different forms, we would like them
+    to be cast to numeric forms for statistical purposes. 
+    To convert scores from undefined forms, a new converter must be added here.
+    If the input does not adhere to defined forms, returns None
+    Arguments:
+        - score_str: A score string from some puzzle, e.g. "3/6" from wordle
+    Returns:
+        - s: Numeric score, should always be numeric type (int, float etc.) 
+    """
+    if (s:=get_fractional_score(score_str)) is not None:
+        return s
+    elif (s:=timestr_to_seconds(score_str)) is not None:
+        return s
+    elif (s:= get_quordle_score(score_str)) is not None:
+        return s
+    elif (s:= get_int_score(score_str)) is not None:
+        return s
+    else:
+        return None
 
 def mini_handler(words):
     """
@@ -72,7 +153,7 @@ def quordle_handler(words):
         - words: List of words in message
     Returns:
         - game_num: Game number for the day
-        - score: Sorted score, e.g. 4567. Any failed words will be zeros at the end, e.g. 7800
+        - score: Sorted score, e.g. 4567. Any failed words will be zeros at the start, e.g. 0078
     """
     game_num = words[2]
     line1 = [x for x in words[3]]
@@ -178,4 +259,4 @@ handler_functions = [mini_handler,
                      capitale_handler]
 
 # Zipper 
-handler_dict = list(zip(puzzle_list,handler_functions))
+handler_dict = dict(zip(puzzle_list,handler_functions))

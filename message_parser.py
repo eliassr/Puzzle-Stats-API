@@ -13,13 +13,13 @@ def get_tokens():
     To get channel ID: Toggle developer mode (discord->settings->advanced) and
     right click channel -> copy ID
 
-    To get auth token: Open discord in browser -> Developer tools -> Network
-    -> Locate entry that says "messages?limit=<some number> -> Request headers
+    To get auth token: Open channel in browser -> Developer tools -> Network
+    -> Locate entry that says "messages?limit=<some number>" -> Request headers
     -> authorization -> copy
 
     Returns:
         - channel_id: Channel ID
-        - h: Authorization string
+        - auth: Authorization string
     """
     with open('tokens.txt') as f: lines=f.readlines()
     auth = lines[0][:-1]
@@ -27,66 +27,88 @@ def get_tokens():
     return channel_id, auth
 
 
-def get_message_contents_from_channel(channel_id, auth):
+def get_message_contents_from_channel(channel_id, 
+                                      auth, 
+                                      limit_per_request=10,
+                                      max_msgs=5000, 
+                                      date_lim='1998-11-25'):
     """
-    Collect messages from a discord channel, and pass to get_message_values for processing.
+    Collect messages from a discord channel, process them and return desired metadata.
+
+    Allows to set a max amount of messages to process (default 5000) and a maximum
+    number of messages per API request (default 10).
+
+    It is also possible to select a date, and the process will halt once reaching this
+    date (collection starts at most recent message). Note that since data is fetched in
+    chunks, some messages from earlier dates might still be fetched. 
+
+    Messages are collected in json format, see doc link:
+    https://discord.com/developers/docs/resources/channel#message-object-message-structure
 
     Arguments:
         - channel_id: ID of channel
         - header: Authentication header for API request.
+        - limit_per_request: Max amount of messages to fetch per API request. 
+        - max_msgs: Maximum amount of messages to collect
+        - date_lim: Pass 'YYYY-MM-DD' to only fetch messages after this date.
+    
     Returns:
         - msgs: List of messages from channel
         - atrs: Authors of messages in msgs
         - dts:  Timestamps of messages in msgs
     """
-    limit=10                            # Messages to collect at once
+    limit = limit_per_request           # Messages to collect in one API request
     last_msg_id = None                  # Set to none to pass 
     header = {'authorization': auth}    # Authorization header
+    query_params = f'limit={limit}'     # Set initial query params
+    
+    # Turn date_lim to timestamp object
+    date_lim = pd.to_datetime(date_lim).tz_localize('UTC') 
 
     # Storage for desired values
     msgs,atrs,dts = [[] for i in range(3)]
 
-    n = 0
-    while True:
-        query_params = f'limit={limit}'
-        if last_msg_id is not None:
-            query_params += f'&before={last_msg_id}'
-
+    for n in range(max_msgs//limit):
         r = requests.get('https://discord.com/api/v9/channels/' + channel_id + '/messages?'+query_params, headers=header)
         j = json.loads(r.text)
 
-        if not j or n>500:
+        if not j:
             break
 
         m = [c['content'] for c in j]
         a = [c['author']['username'] for c in j]
         dt= [c['timestamp'] for c in j]
 
+        if pd.to_datetime(dt[-1]) < date_lim:
+            break
+
         msgs.extend(m)
         atrs.extend(a)
         dts.extend(dt)
 
         last_msg_id = j[-1]['id']
-        n+=1
+        query_params = f'limit={limit}'
+        query_params += f'&before={last_msg_id}'
+
     return msgs,atrs,dts
 
 
 def message_parser(msg, game_dict, handler_dict):
     """
-    Take in a message from the chat and output data from it, such as the score. 
-    Returns None placeholder for messages that do not adhere to defined games
+    Take in a message from the chat and output data from it, such as the puzzle score. 
+    Returns fallback placeholder for messages that do not adhere to defined games.
     Some games may not be well-handled if the game failed. Might be fixed at some point
 
     Arguments:
-        - msg. String with message content
+        - msg: String with message content
+        - game_dict: Dict that maps message content to game
+        - handler_dict: Dict that maps game to its message handler
+    
     Returns:
         - Type of game
         - Score
         - Number for the game
     """
-    
-    # Dict with key being first word in a message, and value being corresponding game
-
     msg_words = msg.split()
 
     # Handle empty messages 
@@ -101,12 +123,10 @@ def message_parser(msg, game_dict, handler_dict):
     except KeyError:
         return ('N/A: Other message',None,None)
     
-    for game,handler in handler_dict:
-        if game == game_type:
-            game_score, game_num = handler(msg_words)
-            break 
-    else:
-        return ('N/A: No handler found',None,None)
+    # Fallback to default message if handler not found
+    fallback_func = lambda x: ('N/A: No handler found',None,None)
+    handler = handler_dict.get(game_type, fallback_func)
+    game_score, game_num = handler(msg_words)
 
     return game_type, game_score, game_num
 
@@ -119,6 +139,7 @@ def create_dataframe(msgs,atrs,dts):
         - msgs: Messages from discord channel
         - atrs: Authors of messages
         - dts:  Timestamps of messages
+    
     Returns:
         - df: Pandas dataframe with structured data
     """
@@ -141,8 +162,16 @@ def create_dataframe(msgs,atrs,dts):
 
 def collect_data():
     """
-    Master function to collect data and return dataframe
+    Master function to collect data and return dataframe.
+    Collects all messages from channel, so might take a while.
 
+    Function can be imported to notebook or other script for simple message parsing:
+
+    import message_parser as MP
+    df = MP.collect_data()
+
+    Returns:
+        - df: Dataframe of parsed puzzle game data
     """
     channel_id, auth = get_tokens()
     msgs, atrs, dts = get_message_contents_from_channel(channel_id=channel_id,auth=auth)
