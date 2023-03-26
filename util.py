@@ -203,9 +203,9 @@ def flagle_io_handler(words):
     return words[2], words[1][1:]
 
 
-def angle_io_handler(words):
+def angle_wtf_handler(words):
     """
-    Return score and game number for angle.io, given message
+    Return score and game number for angle.wtf, given message
     """
     return words[2], words[1][1:]
 
@@ -236,7 +236,7 @@ game_dict = {
     'Daily': 'Quordle',
     'Flagle': 'Flagle-game',
     '#Flagle': 'Flagle.io',
-    '#Angle': 'Angle.io',
+    '#Angle': 'Angle.wtf',
     '#Countryle': 'Countryle',
     '#Capitale': 'Capitale'
 }
@@ -254,7 +254,7 @@ handler_functions = [mini_handler,
                      quordle_handler,
                      flagle_game_handler,
                      flagle_io_handler,
-                     angle_io_handler,
+                     angle_wtf_handler,
                      countryle_handler,
                      capitale_handler]
 

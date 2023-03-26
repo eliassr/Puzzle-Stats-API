@@ -160,6 +160,7 @@ def create_dataframe(msgs,atrs,dts):
     df = pd.DataFrame(dct)
     return df
 
+
 def collect_data():
     """
     Master function to collect data and return dataframe.
@@ -176,4 +177,47 @@ def collect_data():
     channel_id, auth = get_tokens()
     msgs, atrs, dts = get_message_contents_from_channel(channel_id=channel_id,auth=auth)
     df = create_dataframe(msgs,atrs,dts)
+    return df
+
+
+def update_df(pth='data.csv', save_new=False):
+    """
+    To save time on queries, save a local .csv file with the dataframe. 
+    This function will update local copy of dataframe with only new data.
+    Should save time by not running large query for every data refresh.  
+
+    Arguments:
+        - pth: Path to local file
+        - save_new: Choose to save updated to local, will overwrite old file
+
+    Returns:
+        - df: Merged dataframe
+    """
+    try:
+        df_old_data = pd.read_csv(pth,index_col=0,parse_dates=['Timestamp','Date'])
+    except FileNotFoundError:
+        raise Exception('File not found. Check that path is correct, or create file.')
+    date_ser = df_old_data['Date']
+
+    # Fetch messages after this date, added 3 days leeway to catch all messages
+    latest_date_in_local = (date_ser.head(1).item()-pd.Timedelta(days=3)).strftime(format='%Y-%m-%d')
+
+    channel_id, auth = get_tokens()
+    msgs, atrs, dts, = get_message_contents_from_channel(channel_id,
+                                                            auth,
+                                                            date_lim=latest_date_in_local
+                                                            )
+    df_new_data = create_dataframe(msgs,atrs,dts)
+    df_new_data['Date'] = pd.to_datetime(df_new_data['Date'])
+
+    # Add new data, any overlap is only included once
+    df = df_old_data.merge(df_new_data,how='outer')
+
+    # Sort and reset index
+    df.sort_values(by='Timestamp',inplace=True,ascending=False)
+    df.reset_index(inplace=True,drop=True)
+
+    # Save updated data, overwrites old
+    if save_new:
+        df.to_csv(pth) 
     return df
