@@ -5,7 +5,7 @@ import pandas as pd
 
 from util import game_dict, handler_dict
 
-def get_tokens():
+def get_tokens() -> tuple[str,str]:
     """
     Collects Auth-token and channel id for discord channel. They must be saved in 
     local file "tokens.txt" on path. 
@@ -27,11 +27,12 @@ def get_tokens():
     return channel_id, auth
 
 
-def get_message_contents_from_channel(channel_id, 
-                                      auth, 
-                                      limit_per_request=10,
-                                      max_msgs=5000, 
-                                      date_lim='1998-11-25'):
+def get_message_contents_from_channel(channel_id: str, 
+                                      auth: str, 
+                                      limit_per_request: int =10,
+                                      max_msgs: int =5000, 
+                                      date_lim: str ='1998-11-25'
+                                    ) -> tuple[list[str],list[str],list[pd.Timestamp]]:
     """
     Collect messages from a discord channel, process them and return desired metadata.
 
@@ -93,7 +94,10 @@ def get_message_contents_from_channel(channel_id,
     return msgs,atrs,dts
 
 
-def message_parser(msg, game_dict, handler_dict):
+def message_parser(msg: str, 
+                   game_dict: dict, 
+                   handler_dict: dict
+                ) -> tuple[str,str,str]:
     """
     Take in a message from the chat and output data from it, such as the puzzle score. 
     Returns fallback placeholder for messages that do not adhere to defined games.
@@ -131,7 +135,10 @@ def message_parser(msg, game_dict, handler_dict):
     return game_type, game_score, game_num
 
 
-def create_dataframe(msgs,atrs,dts):
+def create_dataframe(msgs: list[str],
+                     atrs: list[str],
+                     dts: list[pd.Timestamp]
+                    ) -> pd.DataFrame:
     """
     Create pandas dataframe to store desired data from messages
 
@@ -161,7 +168,7 @@ def create_dataframe(msgs,atrs,dts):
     return df
 
 
-def collect_data():
+def collect_data() -> pd.DataFrame:
     """
     Master function to collect data and return dataframe.
     Collects all messages from channel, so might take a while.
@@ -180,7 +187,7 @@ def collect_data():
     return df
 
 
-def update_df(pth='data.csv', save_new=False):
+def update_df(pth: str ='data.csv', save_new: bool =False) -> pd.DataFrame:
     """
     To save time on queries, save a local .csv file with the dataframe. 
     This function will update local copy of dataframe with only new data.

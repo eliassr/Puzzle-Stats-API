@@ -7,7 +7,7 @@ handlers for all the different puzzle types.
 import re
 
 
-def timestr_to_seconds(tstr):
+def timestr_to_seconds(tstr: str) -> int | None:
     """
     Convert a str on the form "xmys" to a number of seconds (e.g. 1m20s --> 80) 
     """
@@ -21,12 +21,12 @@ def timestr_to_seconds(tstr):
         return None
 
 
-def get_fractional_score(score_str):
+def get_fractional_score(score_str: str) -> int | None:
     """
     Many games give score on the form "./.", e.g. wordle's 2/6, 3/6 etc.
     This function takes a score string and returns the first number. 
     Alternatively if it says "X/6" for instance, return 0. 
-    If the string does not match the regex "./.", return None.
+    If the string does not match the regex "[1-6X]\/[4-6]", return None.
 
     Arguments:
         - score_str: Score string from parser
@@ -39,7 +39,7 @@ def get_fractional_score(score_str):
         return None
 
 
-def get_int_score(score_str):
+def get_int_score(score_str: str) -> int | None:
     """
     Get single-number score, e.g. from Countryle which has integer scoring.
     Return None if score_str is not a number. 
@@ -58,7 +58,7 @@ def get_int_score(score_str):
         return s
 
 
-def get_quordle_score(score_str):
+def get_quordle_score(score_str: str) -> int | None:
     """
     Get score from quordle game. Returns number of attemps (max digit in score_str).
     If game failed (score_str contains at least one 0), return 0
@@ -77,15 +77,17 @@ def get_quordle_score(score_str):
         return None
 
 
-def score_converter(score_str):
+def score_converter(score_str: str) -> int | None:
     """
     Master function to convert any score str in dataset to a numeric value. 
     Since results from different puzzles come in different forms, we would like them
     to be cast to numeric forms for statistical purposes. 
     To convert scores from undefined forms, a new converter must be added here.
     If the input does not adhere to defined forms, returns None
+
     Arguments:
         - score_str: A score string from some puzzle, e.g. "3/6" from wordle
+
     Returns:
         - s: Numeric score, should always be numeric type (int, float etc.) 
     """
@@ -99,6 +101,7 @@ def score_converter(score_str):
         return s
     else:
         return None
+
 
 def mini_handler(words):
     """
@@ -134,6 +137,7 @@ def micro_nerdle_handler(words):
     """
     return words[3], words[2]
 
+
 def instant_nerdle_handler(words):
     """
     Return score and game number for instant nerdle, given message
@@ -151,6 +155,7 @@ def quordle_handler(words):
 
     Arguments:
         - words: List of words in message
+
     Returns:
         - game_num: Game number for the day
         - score: Sorted score, e.g. 4567. Any failed words will be zeros at the start, e.g. 0078
