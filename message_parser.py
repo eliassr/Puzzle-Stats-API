@@ -130,7 +130,13 @@ def message_parser(msg: str,
     # Fallback to default message if handler not found
     fallback_func = lambda x: ('N/A: No handler found',None,None)
     handler = handler_dict.get(game_type, fallback_func)
-    game_score, game_num = handler(msg_words)
+
+    # Pass to handler
+    game_data = handler(msg_words)
+    if len(game_data) > 2:
+        game_type, game_score, game_num = game_data
+    else:
+        game_score,game_num = game_data    
 
     return game_type, game_score, game_num
 

@@ -145,9 +145,10 @@ def instant_nerdle_handler(words: list[str]) -> tuple[str,str]:
     return words[-2]+words[-1][:-1], words[5]
 
 
-def quordle_handler(words: list[str]) -> tuple[str,str]:
+def quordle_handler(words: list[str]) -> tuple[str,str,str]:
     """
     Parser for quordle score because it's output weirdly. 
+    Handles regular quordle and Sequence-variant.
 
     Arguments:
         - words: List of words in message
@@ -156,6 +157,9 @@ def quordle_handler(words: list[str]) -> tuple[str,str]:
         - game_num: Game number for the day
         - score: Sorted score, e.g. 4567. Any failed words will be zeros at the start, e.g. 0078
     """
+    # Handle Sequence-Quordle variant
+    if (game_type := words[1]) == 'Sequence': words = words[1:]
+
     # Some early games had hashtags in the message, so clear this out
     game_num = words[2] if '#' not in words[2] else words[2][1:]
 
@@ -186,7 +190,7 @@ def quordle_handler(words: list[str]) -> tuple[str,str]:
     lst_str = [str(x) for x in lst]
     score = "".join(lst_str)
 
-    return score, game_num
+    return game_type, score, game_num
     
 
 def flagle_game_handler(words: list[str]) -> tuple[str,str]:
