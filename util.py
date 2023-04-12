@@ -217,15 +217,23 @@ def angle_wtf_handler(words: list[str]) -> tuple[str,str]:
 def countryle_handler(words: list[str]) -> tuple[str,str]:
     """
     Return score and game number for countryle, given message
+    No loss-condition, but you may give up, in which case score is 0
     """
-    return words[4], words[1]
+    if "Gave" in words: 
+        return 0, words[1]
+    else:
+        return words[4], words[1]
 
 
 def capitale_handler(words: list[str]) -> tuple[str,str]:
     """
     Return score and game number for capitale, given message
+    No loss-condition, but you may give up, in which case score is 0
     """
-    return words[4], words[1]
+    if "Gave" in words: 
+        return 0, words[1]
+    else:
+        return words[4], words[1]
 
 
 # Dict with key being first word in a message, and value being corresponding game
