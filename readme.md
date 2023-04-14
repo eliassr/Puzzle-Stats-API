@@ -39,6 +39,16 @@ Required modules:
 - `pandas` `>1.5.3`
 - `requests` `>2.28.2`
 
+### Virtual environment
+
+It is always good practice to run the code in a [virtual environment](https://docs.python.org/3/library/venv.html). With your venv active, run 
+
+```
+$ pip install -r requirements.txt
+```
+
+to install the necessary dependencies. 
+
 ## How to use
 
 Below follows a rough guide on how to use the included functionality.

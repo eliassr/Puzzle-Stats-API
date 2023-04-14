@@ -3,3 +3,4 @@ data*
 tokens.txt
 *.ipynb
 *test*
+.venv/
