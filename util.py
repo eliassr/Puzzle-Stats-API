@@ -73,6 +73,8 @@ def get_quordle_score(score_str: str) -> int | None:
     if re.match(r'^\d{4}$',score_str):
         lst = [int(x) for x in score_str]
         return 0 if 0 in lst else max(lst)
+    elif re.match(r'^\d{5}$',score_str):
+        return 0 if score_str[0]=="0" else 10
     else:
         return None
 
@@ -185,7 +187,11 @@ def quordle_handler(words: list[str]) -> tuple[str,str,str]:
     else:
         s4 = line2[3]
 
-    lst = [int(s) for s in [s1,s2,s3,s4]]
+    for i,s in enumerate(score_lst:= [s1,s2,s3,s4]):
+        if s == '🔟':
+            score_lst[i] = 10
+
+    lst = [int(s) for s in score_lst]
     lst.sort()
     lst_str = [str(x) for x in lst]
     score = "".join(lst_str)
