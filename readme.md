@@ -37,7 +37,7 @@ Code is tested with Python version `3.11.2`. A python installation later than `3
 Required modules:
 - `numpy` `>1.24.2`
 - `pandas` `>1.5.3`
-- `requests` `>2.28.2`
+- `requests` `>2.31.0`
 
 ### Virtual environment
 
