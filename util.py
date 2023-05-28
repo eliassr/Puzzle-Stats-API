@@ -151,6 +151,8 @@ def quordle_handler(words: list[str]) -> tuple[str,str,str]:
     """
     Parser for quordle score because it's output weirdly. 
     Handles regular quordle and Sequence-variant.
+    Redirects to octordle handler in relevant cases since 
+    first word identifier ("Daily") is the same.
 
     Arguments:
         - words: List of words in message
@@ -159,8 +161,17 @@ def quordle_handler(words: list[str]) -> tuple[str,str,str]:
         - game_num: Game number for the day
         - score: Sorted score, e.g. 4567. Any failed words will be zeros at the start, e.g. 0078
     """
+
+    # Pass to Octordle handler if applicable
+    if "Octordle" in words:
+        return octordle_handler(words)
+
     # Handle Sequence-Quordle variant
-    if (game_type := words[1]) == 'Sequence': words = words[1:]
+    if words[1] == 'Sequence': 
+        words = words[1:]
+        game_type = 'Sequence Quordle'
+    else:
+        game_type = 'Quordle'
 
     # Some early games had hashtags in the message, so clear this out
     game_num = words[2] if '#' not in words[2] else words[2][1:]
@@ -198,6 +209,22 @@ def quordle_handler(words: list[str]) -> tuple[str,str,str]:
 
     return game_type, score, game_num
     
+def octordle_handler(words: list[str]) -> tuple[str,str,str]:
+    """"
+    Return type, score and game number for Octordle, or Sequence variant.
+    """
+    
+    if words[1] == 'Sequence':
+        words = words[1:] 
+        game_type = 'Sequence Octordle'
+    else:
+        game_type = 'Octordle'
+
+    game_num = words[2][1:]
+    score = words[-1]
+
+    return game_type, score, game_num
+
 
 def flagle_game_handler(words: list[str]) -> tuple[str,str]:
     """
@@ -209,6 +236,12 @@ def flagle_game_handler(words: list[str]) -> tuple[str,str]:
 def flagle_io_handler(words: list[str]) -> tuple[str,str]:
     """
     Return score and game number for flagle.io, given message
+    """
+    return words[2], words[1][1:]
+
+def worldle_handler(words: list[str]) -> tuple[str,str]:
+    """
+    Return score and game number for worldle, given message
     """
     return words[2], words[1][1:]
 
@@ -253,6 +286,7 @@ game_dict = {
     'Daily': 'Quordle',
     'Flagle': 'Flagle-game',
     '#Flagle': 'Flagle.io',
+    '#Worldle': 'Worldle',
     '#Angle': 'Angle.wtf',
     '#Countryle': 'Countryle',
     '#Capitale': 'Capitale'
@@ -271,6 +305,7 @@ handler_functions = [mini_handler,
                      quordle_handler,
                      flagle_game_handler,
                      flagle_io_handler,
+                     worldle_handler,
                      angle_wtf_handler,
                      countryle_handler,
                      capitale_handler]
