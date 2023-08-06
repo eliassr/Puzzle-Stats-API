@@ -259,7 +259,7 @@ def countryle_handler(words: list[str]) -> tuple[str,str]:
     No loss-condition, but you may give up, in which case score is 0
     """
     if "Gave" in words: 
-        return 0, words[1]
+        return "0", words[1]
     else:
         return words[4], words[1]
 
@@ -270,7 +270,7 @@ def capitale_handler(words: list[str]) -> tuple[str,str]:
     No loss-condition, but you may give up, in which case score is 0
     """
     if "Gave" in words: 
-        return 0, words[1]
+        return "0", words[1]
     else:
         return words[4], words[1]
 
