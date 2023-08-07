@@ -76,6 +76,21 @@ def get_message_contents_from_channel(channel_id: str,
         if not j:
             break
 
+        try:
+            r.raise_for_status()
+        except requests.exceptions.HTTPError as e:
+            # Test for invalid/expired discord auth-token (HTTP error 401 - Unauthorized)
+            if r.status_code == 401:
+                class AuthenticationError(Exception):pass
+                raise AuthenticationError("Unauthorized. Check that your discord auth-token is correct and not expired.")
+            # Test for invalid Channel ID (HTTP error 404 - Not found)
+            elif r.status_code == 404:
+                class ChannelNotFoundError(Exception):pass
+                raise ChannelNotFoundError("Channel URL could not be resolved. Check that your discord channel ID is correct.")
+            # Some other HTTP error occurred
+            else:
+                raise e
+
         m = [c['content'] for c in j]
         a = [c['author']['username'] for c in j]
         dt= [c['timestamp'] for c in j]
